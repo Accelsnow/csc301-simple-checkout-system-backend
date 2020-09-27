@@ -3,7 +3,7 @@ import json
 from flask import session, request, jsonify, abort
 
 from app import app, db
-from app.models import Manager, Checkout
+from app.models import Manager, Checkout, Item
 
 
 def validate_session():
@@ -22,7 +22,7 @@ def login():
         login_data = request.json
 
     if 'username' not in login_data or 'password' not in login_data:
-        abort(400, description="Username or password missing!")
+        abort(400, description="Incomplete request! Fields required: username, password")
 
     username = login_data['username']
     password = login_data['password']
@@ -61,19 +61,19 @@ def get_checkout(checkoutid):
 
 
 @app.route('/checkout/<checkoutid>', methods=['PATCH'])
-def edit_checkout_rates(checkoutid):
+def edit_checkout(checkoutid):
     validate_session()
 
     if type(request.json) == str:
-        discount_data = json.loads(request.json)
+        checkout_data = json.loads(request.json)
     else:
-        discount_data = request.json
+        checkout_data = request.json
 
-    if 'discount' not in discount_data or 'tax_rate' not in discount_data:
-        abort(400, description="Username or password missing!")
+    if 'discount' not in checkout_data or 'tax_rate' not in checkout_data:
+        abort(400, description="Incomplete request! Fields required: discount, tax_rate")
     try:
-        discount = float(discount_data['discount'])
-        tax_rate = float(discount_data['tax_rate'])
+        discount = float(checkout_data['discount'])
+        tax_rate = float(checkout_data['tax_rate'])
         id_ = int(checkoutid)
     except ValueError:
         abort(400, description="Discount rate must be a float number in range [0.0, 1.0]!")
@@ -98,27 +98,65 @@ def edit_checkout_rates(checkoutid):
 
 @app.route('/items', methods=['GET'])
 def get_items():
-    pass
+    validate_session()
+
+    items = Item.query.all()
+
+    return jsonify(items=items)
 
 
-@app.route('/item/restock', methods=['PATCH'])
-def restock_item():
-    pass
+@app.route('/item/<itemid>', methods=['PATCH'])
+def edit_item(itemid):
+    validate_session()
 
+    if type(request.json) == str:
+        item_data = json.loads(request.json)
+    else:
+        item_data = request.json
 
-@app.route('/item/price', methods=['PATCH'])
-def change_item_price():
-    pass
+    if 'discount' not in item_data or 'stock' not in item_data or 'price' not in item_data:
+        abort(400, description="Incomplete request! Fields required: discount, stock, price")
+    try:
+        discount = float(item_data['discount'])
+        stock = int(item_data['stock'])
+        price = float(item_data['price'])
+        id_ = int(itemid)
+    except ValueError:
+        abort(400, description="Discount rate must be a float number in range [0.0, 1.0], stock number must be an "
+                               "integer, price must be a positive float number and item id must be a positive integer!")
+        return
 
+    if not (0 <= discount <= 1):
+        abort(400, description="Discount rate must be in range [0.0, 1.0]!")
 
-@app.route('/item/discount', methods=['PATCH'])
-def change_item_discount():
-    pass
+    item = Item.query.get(id_)
+
+    if not item:
+        abort(400, description="Item id {} does not exist!".format(id_))
+
+    item.price = price
+    item.discount = discount
+    item.stock = stock
+    db.session.commit()
+    return jsonify(item=item)
 
 
 @app.route('/item/<itemid>', methods=['GET'])
-def get_item_info(itemid):
-    pass
+def get_item(itemid):
+    try:
+        item_identifier = int(itemid)
+    except ValueError:
+        item_identifier = str(itemid)
+
+    if type(item_identifier) == str:
+        item = Item.query.filter_by(name=item_identifier).first()
+    else:
+        item = Item.query.get(item_identifier)
+
+    if not item:
+        abort(400, description="Item with name or id {} does not exist!".format(item_identifier))
+
+    return jsonify(item=item)
 
 
 @app.route('/receipts', methods=['GET'])

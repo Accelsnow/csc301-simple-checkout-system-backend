@@ -78,7 +78,7 @@ class Manager(db.Model, Serializable):
 class Item(db.Model, Serializable):
     __tablename__ = 'item'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(64), nullable=False, unique=True)
     discount = db.Column(db.Float, default=0.0)
     price = db.Column(db.Float, nullable=False)
     stock = db.Column(db.Integer, default=0)
