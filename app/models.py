@@ -15,7 +15,10 @@ class Customer(db.Model, Serializable):
     past_purchases = db.relationship("Receipt", back_populates="customer", cascade="all, delete")
 
     def serialize(self, **kwargs):
-        serialized = {}
+        serialized = {'id': self.id, 'name': self.name}
+        if 'recur' in kwargs and kwargs['recur'] < SERIALIZE_RECUR_LIMIT:
+            next_recur = kwargs['recur'] + 1
+            serialized['past_purchases'] = [rec.serialize(recur=next_recur) for rec in self.past_purchases]
         return serialized
 
     def __repr__(self):
@@ -31,16 +34,20 @@ class Receipt(db.Model, Serializable):
     tax_rate = db.Column(db.Float, nullable=False)
     total = db.Column(db.Float, nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id', ondelete='CASCADE'), nullable=False)
-    manager_id = db.Column(db.Integer, db.ForeignKey('manager.id', ondelete='CASCADE'), nullable=False)
     __table_args__ = (db.CheckConstraint('discount <= 1 and discount >= 0', name="receipt_discount_range_check"),
                       db.CheckConstraint('net_total >= 0 and tax_rate >= 0 and total >= 0',
                                          name="receipt_positive_check"),)
 
     customer = db.relationship("Customer", back_populates="past_purchases", foreign_keys=[customer_id])
-    manager = db.relationship("Manager", back_populates="sale_history", foreign_keys=[manager_id])
 
     def serialize(self, **kwargs):
-        return {}
+        serialized = {'timestamp': self.timestamp, 'net_total': float(self.net_total), 'discount': float(self.discount),
+                      'tax_rate': float(self.tax_rate), 'total': float(self.total),
+                      'customer_id': int(self.customer_id)}
+        if 'recur' in kwargs and kwargs['recur'] < SERIALIZE_RECUR_LIMIT:
+            next_recur = kwargs['recur'] + 1
+            serialized['customer'] = self.customer.serialize(recur=next_recur)
+        return serialized
 
     def __repr__(self):
         return '<Receipt {}: ${} - ${}>'.format(self.id, self.net_total, self.total)
@@ -52,10 +59,6 @@ class Manager(db.Model, Serializable):
     username = db.Column(db.String(32), index=True, nullable=True, unique=True)
     password_hash = db.Column(db.String(128))
 
-    sale_history = db.relationship("Receipt", back_populates="manager", cascade="all, delete")
-    checkouts = db.relationship("Checkout", back_populates="manager", cascade="all, delete",
-                                primaryjoin='and_(Manager.id==Checkout.manager_id)')
-
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
 
@@ -65,7 +68,8 @@ class Manager(db.Model, Serializable):
         return check_password_hash(self.password_hash, password)
 
     def serialize(self, **kwargs):
-        return {}
+        serialized = {"id": self.id, "username": self.username}
+        return serialized
 
     def __repr__(self):
         return '<Manager {}>'.format(self.username)
@@ -83,7 +87,9 @@ class Item(db.Model, Serializable):
                       (db.CheckConstraint('price >= 0', name="item_positive_check")))
 
     def serialize(self, **kwargs):
-        return {}
+        serialized = {'id': self.id, 'name': self.name, 'discount': float(self.discount), 'price': float(self.price),
+                      'stock': int(self.stock)}
+        return serialized
 
     def __repr__(self):
         return '<Item {}: ${}>'.format(self.name, self.price)
@@ -94,15 +100,13 @@ class Checkout(db.Model, Serializable):
     id = db.Column(db.Integer, primary_key=True)
     tax_rate = db.Column(db.Float, default=DEFAULT_TAX_RATE)
     discount = db.Column(db.Float, default=0.0)
-    manager_id = db.Column(db.Integer, db.ForeignKey('manager.id', ondelete='CASCADE'))
-
-    manager = db.relationship("Manager", back_populates="checkouts", foreign_keys=[manager_id])
 
     __table_args__ = (db.CheckConstraint('discount <= 1 and discount >= 0', name="checkout_discount_range_check"),
                       (db.CheckConstraint('tax_rate >= 0', name="checkout_positive_check")))
 
     def serialize(self, **kwargs):
-        return {}
+        serialized = {'id': self.id, 'tax_rate': float(self.tax_rate), 'discount': float(self.discount)}
+        return serialized
 
     def __repr__(self):
         return '<Checkout {}>'.format(self.id)
