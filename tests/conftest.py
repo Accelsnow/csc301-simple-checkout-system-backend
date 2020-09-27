@@ -1,7 +1,19 @@
 import pytest
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
+def client():
+    """
+    Use Flask app
+    """
+    from app import app
+    app.config['TESTING'] = True
+
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.fixture()
 def db_():
     """
     Use the flask database
