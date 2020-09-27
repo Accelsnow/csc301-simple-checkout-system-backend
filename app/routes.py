@@ -3,15 +3,15 @@ import json
 from flask import session, request, jsonify, abort
 
 from app import app, db
-from app.models import Manager, Checkout, Item
+from app.models import Manager, Checkout, Item, Receipt, Customer
 
 
 def validate_session():
     if 'manager' not in session or not session['manager']:
-        abort(400, description="You do not have permission for this action!")
+        abort(401, description="You do not have permission for this action!")
 
     if not Manager.query.get(session['manager']):
-        abort(400, description="You do not have permission for this action!")
+        abort(401, description="You do not have permission for this action!")
 
 
 @app.route('/login', methods=['POST'])
@@ -161,9 +161,17 @@ def get_item(itemid):
 
 @app.route('/receipts', methods=['GET'])
 def get_receipts():
-    pass
+    validate_session()
+
+    receipts = Receipt.query.all()
+
+    return jsonify(receipts=receipts)
 
 
 @app.route('/customers', methods=['GET'])
 def get_customers():
-    pass
+    validate_session()
+
+    customers = Customer.query.all()
+
+    return jsonify(customers=customers)
