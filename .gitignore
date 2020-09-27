@@ -1,3 +1,10 @@
+# PyCharm config files
+.idea/
+
+# SQLite files
+app.db
+migrations/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
