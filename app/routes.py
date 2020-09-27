@@ -111,8 +111,6 @@ def edit_checkout(checkoutid):
 
 @app.route('/items', methods=['GET'])
 def get_items():
-    validate_session()
-
     items = Item.query.all()
 
     return jsonify(items=items)
@@ -219,6 +217,36 @@ def get_item(itemid):
     if not item:
         abort(400, description="Item with name or id {} does not exist!".format(item_identifier))
 
+    return jsonify(item=item)
+
+
+@app.route('/item/purchase', methods=['POST'])
+def purchase_item():
+    if type(request.json) == str:
+        item_data = json.loads(request.json)
+    else:
+        item_data = request.json
+
+    if 'id' not in item_data or 'amount' not in item_data:
+        abort(400, description="Incomplete request! Fields required: name, discount, stock, price")
+
+    try:
+        itemid = int(item_data['id'])
+        buy_amount = int(item_data['amount'])
+    except ValueError:
+        abort(400, description="Item id and buy amount must be positive integers!")
+        return
+
+    if itemid <= 0 or buy_amount <= 0:
+        abort(400, description="Item id and buy amount must be positive integers!")
+
+    item = Item.query.get(itemid)
+
+    if buy_amount > item.stock:
+        abort(400, description="Amount requested exceeded total item stock!")
+
+    item.stock = item.stock - buy_amount
+    db.session.commit()
     return jsonify(item=item)
 
 

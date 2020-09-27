@@ -96,16 +96,10 @@ def test_get_all_items(client, db_):
     item1 = Item(id=1, name="test1", discount=0.1, price=0.1, stock=1)
     item2 = Item(id=2, name="test2", discount=0.2, price=0.2, stock=2)
     item3 = Item(id=3, name="test3", discount=0.3, price=0.3, stock=3)
-    username = "test"
-    password = "testPassword=123"
-    manager = Manager(id=1, username=username)
-    manager.set_password(password)
-    db_.session.add(manager)
     db_.session.add(item1)
     db_.session.add(item2)
     db_.session.add(item3)
     db_.session.commit()
-    login(client, username, password)
     res = client.get('/items', headers=headers)
 
     assert res.json['items']
@@ -113,19 +107,6 @@ def test_get_all_items(client, db_):
     assert res.json['items'][0]['name'] == "test1"
     assert res.json['items'][1]['name'] == "test2"
     assert res.json['items'][2]['name'] == "test3"
-
-
-def test_get_all_items_permission(client, db_):
-    item1 = Item(id=1, name="test1", discount=0.1, price=0.1, stock=1)
-    item2 = Item(id=2, name="test2", discount=0.2, price=0.2, stock=2)
-    item3 = Item(id=3, name="test3", discount=0.3, price=0.3, stock=3)
-    db_.session.add(item1)
-    db_.session.add(item2)
-    db_.session.add(item3)
-    db_.session.commit()
-    res = client.get('/items', headers=headers)
-
-    assert res.status_code == 401
 
 
 def test_edit_item(client, db_):
@@ -293,7 +274,7 @@ def test_add_item_permission(client, db_):
     assert res.status_code == 401
 
 
-def delete_item(client, db_):
+def test_delete_item(client, db_):
     item = Item(id=1, name="test1", discount=0.1, price=0.1, stock=1)
     username = "test"
     password = "testPassword=123"
@@ -317,3 +298,14 @@ def test_delete_item_permission(client, db_):
     res = client.delete('/item/1', headers=headers)
 
     assert res.status_code == 401
+
+
+def test_purchase_item(client, db_):
+    item = Item(id=1, name="test1", discount=0.1, price=0.1, stock=5)
+    db_.session.add(item)
+    db_.session.commit()
+    res = client.post('/item/purchase', json=json.dumps({'id': 1, 'amount': 3}), headers=headers)
+
+    assert res.json['item']
+    assert res.json['item']['stock'] == 2
+    assert item.stock == 2
