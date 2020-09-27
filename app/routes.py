@@ -118,6 +118,56 @@ def get_items():
     return jsonify(items=items)
 
 
+@app.route('/item/<itemid>', methods=['DELETE'])
+def delete_item(itemid):
+    validate_session()
+
+    try:
+        item_id = int(itemid)
+    except ValueError:
+        abort(400, description="Item id must be a positive integer!")
+        return
+
+    item = Item.query.get(item_id)
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify(success=True)
+
+
+@app.route('/item', methods=['POST'])
+def add_item():
+    validate_session()
+
+    if type(request.json) == str:
+        item_data = json.loads(request.json)
+    else:
+        item_data = request.json
+
+    if 'name' not in item_data or 'stock' not in item_data or 'price' not in item_data or 'discount' not in item_data:
+        abort(400, description="Incomplete request! Fields required: name, discount, stock, price")
+
+    try:
+        discount = float(item_data['discount'])
+        stock = int(item_data['stock'])
+        price = float(item_data['price'])
+        name = str(item_data['name'])
+    except ValueError:
+        abort(400, description="Discount rate must be a float number in range [0.0, 1.0], stock number must be an "
+                               "integer, price must be a positive float number and item id must be a positive integer!")
+        return
+
+    if not (0 <= discount <= 1):
+        abort(400, description="Discount rate must be in range [0.0, 1.0]!")
+
+    if price < 0:
+        abort(400, description="Price must be a non-negative float number!")
+
+    item = Item(name=name, discount=discount, price=price, stock=stock)
+    db.session.add(item)
+    db.session.commit()
+    return jsonify(item=item)
+
+
 @app.route('/item/<itemid>', methods=['PATCH'])
 def edit_item(itemid):
     validate_session()

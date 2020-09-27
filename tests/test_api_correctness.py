@@ -265,3 +265,55 @@ def test_check_session(client, db_):
     res = client.get('/session', headers=headers)
 
     assert not res.json['current_user']
+
+
+def test_add_item(client, db_):
+    username = "test"
+    password = "testPassword=123"
+    manager = Manager(id=1, username=username)
+    manager.set_password(password)
+    db_.session.add(manager)
+    db_.session.commit()
+    login(client, username, password)
+    res = client.post('/item', json=json.dumps({'stock': 1, 'price': 1, 'discount': 0, 'name': "banana"}),
+                      headers=headers)
+
+    assert res.json['item']
+    assert res.json['item']['name'] == 'banana'
+    item = Item.query.first()
+
+    assert item
+    assert item.name == 'banana'
+
+
+def test_add_item_permission(client, db_):
+    res = client.post('/item', json=json.dumps({'stock': 1, 'price': 1, 'discount': 0, 'name': "banana"}),
+                      headers=headers)
+
+    assert res.status_code == 401
+
+
+def delete_item(client, db_):
+    item = Item(id=1, name="test1", discount=0.1, price=0.1, stock=1)
+    username = "test"
+    password = "testPassword=123"
+    manager = Manager(id=1, username=username)
+    manager.set_password(password)
+    db_.session.add(manager)
+    db_.session.add(item)
+    db_.session.commit()
+    login(client, username, password)
+
+    res = client.delete('/item/1', headers=headers)
+
+    assert res.status_code == 200
+    assert not Item.query.first()
+
+
+def test_delete_item_permission(client, db_):
+    item = Item(id=1, name="test1", discount=0.1, price=0.1, stock=1)
+    db_.session.add(item)
+    db_.session.commit()
+    res = client.delete('/item/1', headers=headers)
+
+    assert res.status_code == 401
