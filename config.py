@@ -7,8 +7,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
 if 'RDS_HOSTNAME' in os.environ:
-    db_uri = "mysql://{}:{}@{}/{}".format(os.environ['RDS_USERNAME'], os.environ['RDS_PASSWORD'],
-                                          os.environ['RDS_HOSTNAME'], os.environ['RDS_DB_NAME'])
+    db_uri = "mysql+pymysql://{}:{}@{}/{}".format(os.environ['RDS_USERNAME'], os.environ['RDS_PASSWORD'],
+                                                  os.environ['RDS_HOSTNAME'], os.environ['RDS_DB_NAME'])
 else:
     db_uri = 'sqlite:///' + os.path.join(basedir, 'app.db')
 
