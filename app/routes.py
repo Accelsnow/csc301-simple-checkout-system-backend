@@ -6,14 +6,6 @@ from app import app, db
 from app.models import Manager, Checkout, Item, Receipt, Customer
 
 
-def validate_session():
-    if 'manager' not in session or not session['manager']:
-        abort(401, description="You do not have permission for this action!")
-
-    if not Manager.query.get(session['manager']):
-        abort(401, description="You do not have permission for this action!")
-
-
 @app.route('/login', methods=['POST'])
 def login():
     if type(request.json) == str:
@@ -36,6 +28,7 @@ def login():
         abort(401, description="Password incorrect!")
 
     session['manager'] = target_manager.id
+    session.modified = True
     return jsonify(manager=target_manager)
 
 
@@ -47,10 +40,10 @@ def logout():
 
 @app.route('/session', methods=['GET'])
 def check_session():
-    if 'manager' not in session or not session['manager']:
+    if 'manager' not in session:
         return jsonify(current_user=None)
 
-    manager = Manager.query.get(session['manager'])
+    manager = Manager.query.get(session.get('manager'))
 
     if not manager:
         return jsonify(current_user=None)
@@ -75,7 +68,11 @@ def get_checkout(checkoutid):
 
 @app.route('/checkout/<checkoutid>', methods=['PATCH'])
 def edit_checkout(checkoutid):
-    validate_session()
+    if 'manager' not in session:
+        abort(401, description="You do not have permission for this action!")
+
+    if not Manager.query.get(session.get('manager')):
+        abort(401, description="You do not have permission for this action!")
 
     if type(request.json) == str:
         checkout_data = json.loads(request.json)
@@ -118,7 +115,11 @@ def get_items():
 
 @app.route('/item/<itemid>', methods=['DELETE'])
 def delete_item(itemid):
-    validate_session()
+    if 'manager' not in session:
+        abort(401, description="You do not have permission for this action!")
+
+    if not Manager.query.get(session.get('manager')):
+        abort(401, description="You do not have permission for this action!")
 
     try:
         item_id = int(itemid)
@@ -134,7 +135,11 @@ def delete_item(itemid):
 
 @app.route('/item', methods=['POST'])
 def add_item():
-    validate_session()
+    if 'manager' not in session:
+        abort(401, description="You do not have permission for this action!")
+
+    if not Manager.query.get(session.get('manager')):
+        abort(401, description="You do not have permission for this action!")
 
     if type(request.json) == str:
         item_data = json.loads(request.json)
@@ -168,7 +173,11 @@ def add_item():
 
 @app.route('/item/<itemid>', methods=['PATCH'])
 def edit_item(itemid):
-    validate_session()
+    if 'manager' not in session:
+        abort(401, description="You do not have permission for this action!")
+
+    if not Manager.query.get(session.get('manager')):
+        abort(401, description="You do not have permission for this action!")
 
     if type(request.json) == str:
         item_data = json.loads(request.json)
@@ -252,7 +261,11 @@ def purchase_item():
 
 @app.route('/receipts', methods=['GET'])
 def get_receipts():
-    validate_session()
+    if 'manager' not in session:
+        abort(401, description="You do not have permission for this action!")
+
+    if not Manager.query.get(session.get('manager')):
+        abort(401, description="You do not have permission for this action!")
 
     receipts = Receipt.query.all()
 
@@ -261,7 +274,11 @@ def get_receipts():
 
 @app.route('/customers', methods=['GET'])
 def get_customers():
-    validate_session()
+    if 'manager' not in session:
+        abort(401, description="You do not have permission for this action!")
+
+    if not Manager.query.get(session.get('manager')):
+        abort(401, description="You do not have permission for this action!")
 
     customers = Customer.query.all()
 
