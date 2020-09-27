@@ -1,10 +1,7 @@
 import os
 
-from dotenv import load_dotenv
-
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-load_dotenv(os.path.join(basedir, '.env'))
 
 if 'RDS_HOSTNAME' in os.environ:
     db_uri = "mysql+pymysql://{}:{}@{}/{}".format(os.environ['RDS_USERNAME'], os.environ['RDS_PASSWORD'],
@@ -14,6 +11,6 @@ else:
 
 
 class Config(object):
-    SECRET_KEY = os.environ.get('SECRET_KEY') or "*(*@!^sdafl318"
+    SECRET_KEY = "9812(*&!@OIFdafdsafaljk" or os.environ.get('SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = db_uri
     SQLALCHEMY_TRACK_MODIFICATIONS = False
