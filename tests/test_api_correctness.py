@@ -245,3 +245,23 @@ def test_get_customers_permission(client, db_):
     res = client.get('/customers', headers=headers)
 
     assert res.status_code == 401
+
+
+def test_check_session(client, db_):
+    username = "test"
+    password = "testPassword=123"
+    manager = Manager(id=1, username=username)
+    manager.set_password(password)
+    db_.session.add(manager)
+    db_.session.commit()
+    login(client, username, password)
+    res = client.get('/session', headers=headers)
+
+    assert res.json['current_user']
+    assert res.json['current_user']['id'] == 1
+    assert res.json['current_user']['username'] == username
+
+    logout(client)
+    res = client.get('/session', headers=headers)
+
+    assert not res.json['current_user']

@@ -45,6 +45,19 @@ def logout():
     return jsonify(success=True)
 
 
+@app.route('/session', methods=['GET'])
+def check_session():
+    if 'manager' not in session or not session['manager']:
+        return jsonify(current_user=None)
+
+    manager = Manager.query.get(session['manager'])
+
+    if not manager:
+        return jsonify(current_user=None)
+
+    return jsonify(current_user=manager)
+
+
 @app.route('/checkout/<checkoutid>', methods=['GET'])
 def get_checkout(checkoutid):
     try:
