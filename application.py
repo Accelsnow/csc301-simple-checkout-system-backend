@@ -4,7 +4,9 @@ from app.models import Customer, Manager, Item, Receipt, Checkout
 application = app
 
 if __name__ == '__main__':
+    db.create_all()
     if not Manager.query.first() and not Checkout.query.first() and not Item.query.first():
+        print("create")
         customer1 = Customer(id=1, name="John Customer Doe")
         customer2 = Customer(id=2, name="Jane Customer Doe")
         manager = Manager(id=1, username="manager")
