@@ -11,6 +11,6 @@ else:
 
 
 class Config(object):
-    SECRET_KEY = "9812(*&!@OIFdafdsafaljk" or os.environ.get('SECRET_KEY')
+    SECRET_KEY = os.environ.get('SECRET_KEY') or "9812(*&!@OIFdafdsafaljk"
     SQLALCHEMY_DATABASE_URI = db_uri
     SQLALCHEMY_TRACK_MODIFICATIONS = False

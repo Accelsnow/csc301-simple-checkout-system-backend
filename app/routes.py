@@ -3,7 +3,16 @@ import json
 from flask import session, request, jsonify, abort
 
 from app import app, db
+from sqlalchemy.exc import IntegrityError
 from app.models import Manager, Checkout, Item, Receipt, Customer
+
+
+def validate_session():
+    if 'manager' not in session or not session['manager']:
+        abort(401, description="You do not have permission for this action!")
+
+    if not Manager.query.get(session['manager']):
+        abort(401, description="You do not have permission for this action!")
 
 
 @app.route('/login', methods=['POST'])
@@ -68,11 +77,7 @@ def get_checkout(checkoutid):
 
 @app.route('/checkout/<checkoutid>', methods=['PATCH'])
 def edit_checkout(checkoutid):
-    if 'manager' not in session:
-        abort(401, description="You do not have permission for this action!")
-
-    if not Manager.query.get(session.get('manager')):
-        abort(401, description="You do not have permission for this action!")
+    validate_session()
 
     if type(request.json) == str:
         checkout_data = json.loads(request.json)
@@ -102,7 +107,14 @@ def edit_checkout(checkoutid):
 
     checkout.discount = discount
     checkout.tax_rate = tax_rate
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        print(e)
+        abort(400, description="Checkout failed (valid discount and tax_rate)?")
+        return
+
     return jsonify(checkout=checkout)
 
 
@@ -115,11 +127,7 @@ def get_items():
 
 @app.route('/item/<itemid>', methods=['DELETE'])
 def delete_item(itemid):
-    if 'manager' not in session:
-        abort(401, description="You do not have permission for this action!")
-
-    if not Manager.query.get(session.get('manager')):
-        abort(401, description="You do not have permission for this action!")
+    validate_session()
 
     try:
         item_id = int(itemid)
@@ -128,18 +136,23 @@ def delete_item(itemid):
         return
 
     item = Item.query.get(item_id)
+
+    if not item:
+        abort(400, description="Item {} does not exist!".format(item_id))
+
     db.session.delete(item)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        print(e)
+        abort(400, description="Item deletion failed!")
+        return
     return jsonify(success=True)
 
 
 @app.route('/item', methods=['POST'])
 def add_item():
-    if 'manager' not in session:
-        abort(401, description="You do not have permission for this action!")
-
-    if not Manager.query.get(session.get('manager')):
-        abort(401, description="You do not have permission for this action!")
+    validate_session()
 
     if type(request.json) == str:
         item_data = json.loads(request.json)
@@ -165,19 +178,25 @@ def add_item():
     if price < 0:
         abort(400, description="Price must be a non-negative float number!")
 
+    prev_item = Item.query.filter_by(name=name).first()
+
+    if prev_item:
+        abort(400, description="Item with name {} already exists!".format(name))
+
     item = Item(name=name, discount=discount, price=price, stock=stock)
     db.session.add(item)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        print(e)
+        abort(400, description="Item creation failed!")
+        return
     return jsonify(item=item)
 
 
 @app.route('/item/<itemid>', methods=['PATCH'])
 def edit_item(itemid):
-    if 'manager' not in session:
-        abort(401, description="You do not have permission for this action!")
-
-    if not Manager.query.get(session.get('manager')):
-        abort(401, description="You do not have permission for this action!")
+    validate_session()
 
     if type(request.json) == str:
         item_data = json.loads(request.json)
@@ -207,7 +226,12 @@ def edit_item(itemid):
     item.price = price
     item.discount = discount
     item.stock = stock
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        print(e)
+        abort(400, description="Item modification failed!")
+        return
     return jsonify(item=item)
 
 
@@ -255,17 +279,18 @@ def purchase_item():
         abort(400, description="Amount requested exceeded total item stock!")
 
     item.stock = item.stock - buy_amount
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        print(e)
+        abort(400, description="Item purchase failed!")
+        return
     return jsonify(item=item)
 
 
 @app.route('/receipts', methods=['GET'])
 def get_receipts():
-    if 'manager' not in session:
-        abort(401, description="You do not have permission for this action!")
-
-    if not Manager.query.get(session.get('manager')):
-        abort(401, description="You do not have permission for this action!")
+    validate_session()
 
     receipts = Receipt.query.all()
 
@@ -274,11 +299,7 @@ def get_receipts():
 
 @app.route('/customers', methods=['GET'])
 def get_customers():
-    if 'manager' not in session:
-        abort(401, description="You do not have permission for this action!")
-
-    if not Manager.query.get(session.get('manager')):
-        abort(401, description="You do not have permission for this action!")
+    validate_session()
 
     customers = Customer.query.all()
 
