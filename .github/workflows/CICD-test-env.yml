@@ -1,14 +1,12 @@
-name: Build, Pytest and deploy to Amazon ECS
+name: Build, Pytest and deploy to test server
 env:
-  EB_PACKAGE_S3_BUCKET_NAME: "checkout-flask-app-package"
-  EB_APPLICATION_NAME: "Checkout"
-  EB_ENVIRONMENT_NAME: "Checkout-env"
+  EB_PACKAGE_S3_BUCKET_NAME: "checkout-flask-test-package"
+  EB_APPLICATION_NAME: "Checkout-test"
+  EB_ENVIRONMENT_NAME: "CheckoutTest-env"
   DEPLOY_PACKAGE_NAME: "flask_app_${{ github.sha }}.zip"
   AWS_REGION_NAME: "ca-central-1"
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 
