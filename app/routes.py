@@ -7,6 +7,16 @@ from sqlalchemy.exc import IntegrityError
 from app.models import Manager, Checkout, Item, Receipt, Customer
 
 
+@app.errorhandler(400)
+def data_error(e):
+    return jsonify(error=str(e)), 400
+
+
+@app.errorhandler(401)
+def credential_error(e):
+    return jsonify(error=str(e)), 401
+
+
 def validate_session():
     if 'manager' not in session or not session['manager']:
         abort(401, description="You do not have permission for this action!")
