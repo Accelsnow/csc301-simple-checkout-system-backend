@@ -6,7 +6,7 @@ from serializable import Serializable
 SERIALIZE_RECUR_LIMIT = 3
 DEFAULT_TAX_RATE = 0.13
 
-# Customer Model
+
 class Customer(db.Model, Serializable):
     __tablename__ = 'customer'
     id = db.Column(db.Integer, primary_key=True)
@@ -24,7 +24,7 @@ class Customer(db.Model, Serializable):
     def __repr__(self):
         return '<Customer {}>'.format(self.name)
 
-# Receipt Model
+
 class Receipt(db.Model, Serializable):
     __tablename__ = 'receipt'
     id = db.Column(db.Integer, primary_key=True)
@@ -52,7 +52,7 @@ class Receipt(db.Model, Serializable):
     def __repr__(self):
         return '<Receipt {}: ${} - ${}>'.format(self.id, self.net_total, self.total)
 
-# Manager Model
+
 class Manager(db.Model, Serializable):
     __tablename__ = 'manager'
     id = db.Column(db.Integer, primary_key=True)
@@ -74,7 +74,7 @@ class Manager(db.Model, Serializable):
     def __repr__(self):
         return '<Manager {}>'.format(self.username)
 
-# Item Model
+
 class Item(db.Model, Serializable):
     __tablename__ = 'item'
     id = db.Column(db.Integer, primary_key=True)
@@ -94,7 +94,7 @@ class Item(db.Model, Serializable):
     def __repr__(self):
         return '<Item {}: ${}>'.format(self.name, self.price)
 
-# Checkout Model
+
 class Checkout(db.Model, Serializable):
     __tablename__ = 'checkout'
     id = db.Column(db.Integer, primary_key=True)
