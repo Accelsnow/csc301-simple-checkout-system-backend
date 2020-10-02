@@ -14,3 +14,6 @@ class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or "9812(*&!@OIFdafdsafaljk"
     SQLALCHEMY_DATABASE_URI = db_uri
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SESSION_COOKIE_SECURE=True
+    SESSION_COOKIE_HTTPONLY=True
+    SESSION_COOKIE_SAMESITE="lax"
