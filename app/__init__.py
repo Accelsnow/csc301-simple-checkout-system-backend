@@ -22,6 +22,7 @@ app.json_encoder = CheckoutJSONEncoder
 db = SQLAlchemy(app)
 from app.models import Manager, Item, Checkout, Receipt, Customer
 
+# initial database injection
 db.create_all()
 if not Manager.query.first() and not Checkout.query.first() and not Item.query.first():
     customer1 = Customer(id=1, name="John Customer Doe")
