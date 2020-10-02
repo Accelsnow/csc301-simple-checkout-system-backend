@@ -16,7 +16,7 @@ def data_error(e):
 def credential_error(e):
     return jsonify(error=str(e)), 401
 
-# validate session
+
 def validate_session():
     if 'manager' not in session or not session['manager']:
         abort(401, description="You do not have permission for this action!")
@@ -24,7 +24,7 @@ def validate_session():
     if not Manager.query.get(session['manager']):
         abort(401, description="You do not have permission for this action!")
 
-# validate and login Manager
+
 @app.route('/login', methods=['POST'])
 def login():
     if type(request.json) == str:
@@ -50,13 +50,13 @@ def login():
     session.modified = True
     return jsonify(manager=target_manager)
 
-# log out Manager
+
 @app.route('/logout', methods=['GET'])
 def logout():
     session.pop('manager', None)
     return jsonify(success=True)
 
-# check Session
+
 @app.route('/session', methods=['GET'])
 def check_session():
     if 'manager' not in session:
@@ -69,7 +69,7 @@ def check_session():
 
     return jsonify(current_user=manager)
 
-# get checkout information given id
+
 @app.route('/checkout/<checkoutid>', methods=['GET'])
 def get_checkout(checkoutid):
     try:
@@ -84,7 +84,7 @@ def get_checkout(checkoutid):
 
     return jsonify(checkout=checkout)
 
-# edit checkout information given id
+
 @app.route('/checkout/<checkoutid>', methods=['PATCH'])
 def edit_checkout(checkoutid):
     validate_session()
@@ -127,14 +127,14 @@ def edit_checkout(checkoutid):
 
     return jsonify(checkout=checkout)
 
-# get all items
+
 @app.route('/items', methods=['GET'])
 def get_items():
     items = Item.query.all()
 
     return jsonify(items=items)
 
-# delete item given id
+
 @app.route('/item/<itemid>', methods=['DELETE'])
 def delete_item(itemid):
     validate_session()
@@ -159,7 +159,7 @@ def delete_item(itemid):
         return
     return jsonify(success=True)
 
-# add item given valid info
+
 @app.route('/item', methods=['POST'])
 def add_item():
     validate_session()
@@ -203,7 +203,7 @@ def add_item():
         return
     return jsonify(item=item)
 
-# edit item info given valid id and info
+
 @app.route('/item/<itemid>', methods=['PATCH'])
 def edit_item(itemid):
     validate_session()
@@ -244,7 +244,7 @@ def edit_item(itemid):
         return
     return jsonify(item=item)
 
-# get item given id
+
 @app.route('/item/<itemid>', methods=['GET'])
 def get_item(itemid):
     try:
@@ -262,7 +262,7 @@ def get_item(itemid):
 
     return jsonify(item=item)
 
-# purchase and update item given valid id and quantity
+
 @app.route('/item/purchase', methods=['POST'])
 def purchase_item():
     if type(request.json) == str:
@@ -297,7 +297,7 @@ def purchase_item():
         return
     return jsonify(item=item)
 
-# get all receipts
+
 @app.route('/receipts', methods=['GET'])
 def get_receipts():
     validate_session()
@@ -306,7 +306,7 @@ def get_receipts():
 
     return jsonify(receipts=receipts)
 
-# get all customers
+
 @app.route('/customers', methods=['GET'])
 def get_customers():
     validate_session()
