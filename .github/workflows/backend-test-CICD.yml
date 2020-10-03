@@ -1,4 +1,4 @@
-name: Build, Pytest and deploy to test server
+name: Build, test and deploy to test server
 env:
   EB_PACKAGE_S3_BUCKET_NAME: "checkout-flask-test-package"
   EB_APPLICATION_NAME: "Checkout-test"
