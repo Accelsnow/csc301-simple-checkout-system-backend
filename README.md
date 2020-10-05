@@ -1,3 +1,4 @@
+CSC301 - A1 - CHECKOUT APP - MADE BY Youhai Li & Junan Zhao
 # Instructions
 
 Links for our APP&#39;s repos:
