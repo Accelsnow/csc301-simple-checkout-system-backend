@@ -1,81 +1,188 @@
 CSC301 - A1 - CHECKOUT APP - MADE BY Youhai Li & Junan Zhao
 # Instructions
 
-Links for our APP&#39;s repos:
+To test our database, please send below api calls to our deployed server: (http://checkout-env.eba-icztdryu.ca-central-1.elasticbeanstalk.com) to test our functionalities
 
-Backend: [https://github.com/Accelsnow/assignment-1-4-accelsnow-altair59-backend](https://github.com/Accelsnow/assignment-1-4-accelsnow-altair59-backend)
+**API docs**
 
-WEB Frontend: [https://github.com/Accelsnow/assignment-1-4-accelsnow-altair59-web](https://github.com/Accelsnow/assignment-1-4-accelsnow-altair59-web)
+- Login as Manager
 
-MOB Frontend:[https://github.com/Accelsnow/assignment-1-4-accelsnow-altair59-mobile](https://github.com/Accelsnow/assignment-1-4-accelsnow-altair59-mobile)
+  route: '/login'
+  
+  method: POST
+  
+  body: {username: manager, password: Passw0rd123}
+  
+  if correct return: {
+    "manager": {
+        "id": 1,
+        "username": "manager"
+    }
+  }
+  
+  
+- Log out as Manager
 
-**Design Overview**
+  route: '/logout'
+  
+  method: GET
+  
+  if correct return: {
+    "success": true
+  }
+  
+  
+- Check Manager session
 
-- We decide to implement a checkout system backed up by an item inventory supported by MySQL database. Any user from WEB end or MOBILE end of our APP can search to add item, modify cart, and see the calculated total of the items (involving individual item discount, global cart discount, and global tax rate as parameter), and each session ends after the user confirms the receipt. However, considering that manager operations on the inventory (editing certain fields of item, removing item, adding item under restriction, and editing global taxes &amp; discounts) are sophisticated to be performed and table with massive information are not visually clean and tidy on MOBILE end, we decide to implement access (of course with authorization) to manager portal only on WEB end.
+  route: '/session'
+  
+  method: GET
+  
+  if manager logged in return: {
+    "current_user": {
+        "id": 1,
+        "username": "manager"
+    }
+  }
+  
+ 
+- Get global tax & discount
 
-**Functionality Instruction**
+  route: '/checkout/checkoutid'
+  
+  method: GET
+  
+  e.g. if checkoutid == 1 return: {
+    "checkout": {
+        "discount": 0.2,
+        "id": 1,
+        "tax_rate": 0.2
+    }
+  }
+  
+  
+- Edit global tax & discount
 
-============================BOTH WEB &amp; MOBILE APP==========================
+  route: '/checkout/checkoutid'
+  
+  method: PATCH
+  
+  e.g. body: {discount: 0.9, tax_rate: 0.1}
+  
+  e.g. if checkoutid == 1 return: {
+    "checkout": {
+        "discount": 0.9,
+        "id": 1,
+        "tax_rate": 0.1
+    }
+  }
+  
+  
+- Get all items
 
-- User can type in the correct item id (if the user knows the target item&#39;s id) or standard item name (e.g. coke, sprite…) to add that item (quantity 1) into the cart. If the item is already in the cart, increment that item&#39;s quantity by 1. Error messages will be given if such item does not exist or is currently out of stock.
+  route: '/items'
+  
+  method: GET
+  
+  if correct return: {
+    "items": [
+        {
+            "discount": 0.0,
+            "id": 1,
+            "name": "coke",
+            "price": 0.5,
+            "stock": 85
+        },
+        {
+            "discount": 1.0,
+            "id": 2,
+            "name": "sprite",
+            "price": 3.0,
+            "stock": 21
+        },
+        ...
+    ]
+  }
+  
+- Delete item given id
 
-- User can see proper information of all items in the cart.
+  route: '/item/itemid'
+  
+  method: DELETE
+  
+  e.g. if itemid == 33 return: {
+    "success": true
+  }
+  
+- Add item given valid info
 
-- User can edit the quantity of each item in the cart manually in the range of [0, stock]. Item will be removed from the cart if invalid input is given.
+  route: 'item'
+  
+  method: POST
+  
+  e.g. body: {discount: 0.1, stock: 100, price: 1.50, name: "301"}
+  
+  e.g. return: {
+    "item": {
+        "discount": 0.1,
+        "id": 34,
+        "name": "301",
+        "price": 1.5,
+        "stock": 100
+    }
+  }
+  
+- Edit item info given id and valid info
 
-  REQUIREMENT:
-  0 <= quantity <= stock
+  route: '/item/itemid'
+  
+  method: PATCH
+  
+  e.g. body: {discount: 0.9, stock: 1000, price: 3.00}
+  
+  e.g. if itemid == 34 return: {
+    "item": {
+        "discount": 0.9,
+        "id": 34,
+        "name": "301",
+        "price": 3.0,
+        "stock": 1000
+    }
+  }
+  
+- Get item given id
 
-- User can see the net total of all items in the cart in real time (update as user changes quantity).
+  route: '/item/itemid'
+  
+  method: GET
+  
+  e.g. if itemid == 34 return: {
+    "item": {
+        "discount": 0.9,
+        "id": 34,
+        "name": "301",
+        "price": 3.0,
+        "stock": 1000
+    }
+  }
+  
+- Purchase item given valid info
 
-- User can click the checkout button to see the receipt which includes more detailed information (cart discount, cart tax rate, total, and time of checkout). If the user clicks the confirm button, a purchase is completed and the cart will be cleaned and inventory will be updated correctly (thus entering next purchase), else user is sent back to the cart (the purchase remains pending).
-
-- If someone else also bought this item before the user checks out, the quantity of that item in the cart will be adjusted if needed (e.g. if A wants to buy 2 cokes but the stock of coke is changed from 2 to 1 since B buys 1 coke before A checks out, then when checks out A will be notified of this change and coke quantity in A&#39;s cart will be updated to 1 accordingly).
-
-============================BELOW ARE WEB APP ONLY=========================
-
-- In order to login as Manager, user need this Info: {username: manager, password: Passw0rd123}. User can click the manager portal to log in as manager, and be redirected to manager portal page, where user can click the log out button to quit manager session and be redirected to checkout page. All unauthorized accesses to manager page are prohibited.
-
-- Manager can type in valid information about a new item manager comes up with and click the add button to add the new item to the inventory. If invalid values are given, the add button will be disabled. Other errors only checkable in database (e.g. duplicate key…) will be reported as an alert if occurred.
-
-  REQUIREMENT:
-  name: String
-  price: Float &amp;&amp; 0 <= price
-  discount: Float &amp;&amp; 0 <= discount <= 1
-  stock: Integer &amp;&amp; 0 <= stock
-
-- Manager has all access to all items&#39; information. In addition, manager can edit one item&#39;s price, discount, and stock in-line or remove this item from the inventory. Errors will be caught and reported as an alert.
-
-  REQUIREMENT:
-  price: Float &amp;&amp; 0 <= price
-  discount: Float &amp;&amp; 0 <= discount <= 1
-  stock: Integer &amp;&amp; 0 <= stock
-
-- Manager can edit the global tax rate or discount given valid input. Errors will be caught and reported as an alert.
-
-  REQUIREMENT:
-  discount: Float &amp;&amp; 0 <= discount <= 1
-  tax\_rate: Float &amp;&amp; 0 <= tax\_rate
-
-**Frontend Component Design**
-
-============================BOTH WEB &amp; MOBILE APP==========================
-
-- Checkout page:
-  - An item search bar to add items into the cart
-  - A table of items in the cart with proper information
-  - A calculator of total cost of items in the cart
-  - A checkout button
-  - A modal displaying receipt information
-  - A log in button to enter manager session
-
-============================BELOW ARE WEB APP ONLY=========================
-
-- Manager page:
-  - An form to add a new item
-  - A table of all the items in inventory with proper information with in-line edit of item information and removal of item
-  - A form to edit global discount and tax rate
-  - A log out button to quit manager session
+  route: '/item/purchase'
+  
+  method: POST
+  
+  e.g. body: {id: 34, amount: 50}
+  
+  e.g. return: {
+    "item": {
+        "discount": 0.9,
+        "id": 34,
+        "name": "301",
+        "price": 3.0,
+        "stock": 950
+    }
+  }
 
 **Backend Model Design**
 
@@ -112,18 +219,3 @@ tax\_rate: Float, // global tax rate should be in range [0,
 discount: Float // global discount should be in range [0,1]
 
 }
-
-**Testing Instruction**
-
-- Testing for backend logic
-
-All tests are written in Pytest, the testing directory is &quot;assignment-1-4-accelsnow-altair59-backend/tests/&quot;, including:
-
-1. &quot;conftest.py&quot; for setting up testing environment.
-2. &quot;test\_db\_integrity.py&quot; for checking database integrity.
-3. &quot;test\_api\_correctness.py&quot; for checking api functionalities.
-
-- Testing for App functionality
-
-1. Please refer to section Functionality Instruction for all operations and behaviours.
-
