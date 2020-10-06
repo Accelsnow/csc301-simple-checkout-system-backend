@@ -1,9 +1,9 @@
 import json
 
 from flask import session, request, jsonify, abort
+from sqlalchemy.exc import IntegrityError
 
 from app import app, db
-from sqlalchemy.exc import IntegrityError
 from app.models import Manager, Checkout, Item, Receipt, Customer
 
 
@@ -16,6 +16,7 @@ def data_error(e):
 def credential_error(e):
     return jsonify(error=str(e)), 401
 
+
 # validate session
 def validate_session():
     if 'manager' not in session or not session['manager']:
@@ -23,6 +24,7 @@ def validate_session():
 
     if not Manager.query.get(session['manager']):
         abort(401, description="You do not have permission for this action!")
+
 
 # validate and login Manager
 @app.route('/login', methods=['POST'])
@@ -50,11 +52,13 @@ def login():
     session.modified = True
     return jsonify(manager=target_manager)
 
+
 # log out Manager
 @app.route('/logout', methods=['GET'])
 def logout():
     session.pop('manager', None)
     return jsonify(success=True)
+
 
 # check Session
 @app.route('/session', methods=['GET'])
@@ -68,6 +72,7 @@ def check_session():
         return jsonify(current_user=None)
 
     return jsonify(current_user=manager)
+
 
 # get checkout information given id
 @app.route('/checkout/<checkoutid>', methods=['GET'])
@@ -83,6 +88,7 @@ def get_checkout(checkoutid):
         abort(400, description="Checkout id {} does not exist!".format(id_))
 
     return jsonify(checkout=checkout)
+
 
 # edit checkout information given id
 @app.route('/checkout/<checkoutid>', methods=['PATCH'])
@@ -127,12 +133,14 @@ def edit_checkout(checkoutid):
 
     return jsonify(checkout=checkout)
 
+
 # get all items
 @app.route('/items', methods=['GET'])
 def get_items():
     items = Item.query.all()
 
     return jsonify(items=items)
+
 
 # delete item given id
 @app.route('/item/<itemid>', methods=['DELETE'])
@@ -158,6 +166,7 @@ def delete_item(itemid):
         abort(400, description="Item deletion failed!")
         return
     return jsonify(success=True)
+
 
 # add item given valid info
 @app.route('/item', methods=['POST'])
@@ -203,6 +212,7 @@ def add_item():
         return
     return jsonify(item=item)
 
+
 # edit item info given valid id and info
 @app.route('/item/<itemid>', methods=['PATCH'])
 def edit_item(itemid):
@@ -244,6 +254,7 @@ def edit_item(itemid):
         return
     return jsonify(item=item)
 
+
 # get item given id
 @app.route('/item/<itemid>', methods=['GET'])
 def get_item(itemid):
@@ -252,15 +263,18 @@ def get_item(itemid):
     except ValueError:
         item_identifier = str(itemid)
 
-    if type(item_identifier) == str:
-        item = Item.query.filter_by(name=item_identifier).first()
-    else:
+    item = None
+    if type(item_identifier) == int:
         item = Item.query.get(item_identifier)
+
+    if not item:
+        item = Item.query.filter_by(name=str(item_identifier)).first()
 
     if not item:
         abort(400, description="Item with name or id {} does not exist!".format(item_identifier))
 
     return jsonify(item=item)
+
 
 # purchase and update item given valid id and quantity
 @app.route('/item/purchase', methods=['POST'])
@@ -297,6 +311,7 @@ def purchase_item():
         return
     return jsonify(item=item)
 
+
 # get all receipts
 @app.route('/receipts', methods=['GET'])
 def get_receipts():
@@ -305,6 +320,7 @@ def get_receipts():
     receipts = Receipt.query.all()
 
     return jsonify(receipts=receipts)
+
 
 # get all customers
 @app.route('/customers', methods=['GET'])
